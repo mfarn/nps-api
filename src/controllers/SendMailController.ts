@@ -3,6 +3,7 @@ import { getCustomRepository } from 'typeorm';
 import { UsersRepository } from '../repositories/UsersRepository';
 import { SurveysRepository } from '../repositories/SurveysRepository';
 import { UserSurveyRepository } from '../repositories/UserSurveyRepository';
+import SendMailService from '../services/SendMailService';
 
 class SendMailController {
 
@@ -23,9 +24,9 @@ class SendMailController {
 
         /* typeorm maps id: survey_id, the property inside survey is "id" 
         but the controller receives "survey_id" */
-        const surveyAlreadyExists = await surveysRepository.findOne({id: survey_id})
+        const survey = await surveysRepository.findOne({id: survey_id})
 
-        if(!surveyAlreadyExists) {
+        if(!survey) {
             return response.status(400).json({
                 error: "Survey does not exist!"
             })
@@ -37,7 +38,9 @@ class SendMailController {
         });
 
         await usersSurveyRepository.save(userSurvey);
+       
         //Send email to user
+        await SendMailService.execute(email, survey.title, survey.description)
 
         return response.json(userSurvey);
     }
