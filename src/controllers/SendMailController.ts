@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { resolve } from 'path';
-import { getCustomRepository } from 'typeorm';
+import { getCustomRepository, Not, IsNull } from 'typeorm';
 import { UsersRepository } from '../repositories/UsersRepository';
 import { SurveysRepository } from '../repositories/SurveysRepository';
 import { UserSurveyRepository } from '../repositories/UserSurveyRepository';
@@ -34,6 +34,16 @@ class SendMailController {
         }
 
         const npsPath = resolve(__dirname, "..", "views", "emails", "npsMail.hbs");
+
+        const userSurveyAlreadyAnswered = await usersSurveyRepository.findOne({
+            where: {user_id: user.id, value: Not(IsNull()), survey_id: survey_id },
+        });
+
+        if(userSurveyAlreadyAnswered) {
+            return response.status(400).json({
+                error: "Survey already sent to this user!"
+            })
+        }
 
         const userSurveyAlreadyExists = await usersSurveyRepository.findOne({
             where: {user_id: user.id, value: null, survey_id: survey_id},
