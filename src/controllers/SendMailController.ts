@@ -36,7 +36,7 @@ class SendMailController {
         const npsPath = resolve(__dirname, "..", "views", "emails", "npsMail.hbs");
 
         const userSurveyAlreadyExists = await usersSurveyRepository.findOne({
-            where: {user_id: user.id, value: null},
+            where: {user_id: user.id, value: null, survey_id: survey_id},
             relations: ["user", "survey"]
         });
 
