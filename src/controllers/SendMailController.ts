@@ -27,14 +27,6 @@ class SendMailController {
         but the controller receives "survey_id" */
         const survey = await surveysRepository.findOne({id: survey_id})
 
-        const variables = {
-            name: user.name,
-            title: survey.title,
-            description: survey.description,
-            user_id: user.id,
-            link: process.env.URL_MAIL
-        }
-
         if(!survey) {
             return response.status(400).json({
                 error: "Survey does not exist!"
@@ -44,11 +36,20 @@ class SendMailController {
         const npsPath = resolve(__dirname, "..", "views", "emails", "npsMail.hbs");
 
         const userSurveyAlreadyExists = await usersSurveyRepository.findOne({
-            where: [{user_id: user.id}, {value: null}],
+            where: {user_id: user.id, value: null},
             relations: ["user", "survey"]
         });
 
+        const variables = {
+            name: user.name,
+            title: survey.title,
+            description: survey.description,
+            id: "",
+            link: process.env.URL_MAIL
+        }
+
         if (userSurveyAlreadyExists) {
+            variables.id = userSurveyAlreadyExists.id;
             await SendMailService.execute(email, survey.title, variables, npsPath);
             return response.json(userSurveyAlreadyExists);
         }
@@ -59,6 +60,8 @@ class SendMailController {
         });
 
         await usersSurveyRepository.save(userSurvey);
+
+        variables.id = userSurvey.id;
        
         //Send email to user
         await SendMailService.execute(email, survey.title, variables, npsPath)
